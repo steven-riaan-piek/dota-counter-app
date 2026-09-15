@@ -1,5 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
+
+interface Hero {
+    id: number;
+    name: string;
+    slug: string;
+    aliases: string[];
+    image: string;
+}
 
 interface Counter {
     hero: string;
@@ -14,29 +22,123 @@ interface CounterResponse {
 
 function App() {
     const [heroInput, setHeroInput] = useState("");
-    const [enemyHeroes, setEnemyHeroes] = useState<string[]>([]);
+    const [heroes, setHeroes] = useState<Hero[]>([]);
+    const [enemyHeroes, setEnemyHeroes] = useState<Hero[]>([]);
     const [counters, setCounters] = useState<Counter[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    function addHero() {
-        const hero = heroInput.trim().toLowerCase();
+    useEffect(() => {
+        async function loadHeroes() {
+            try {
+                const response = await fetch("/api/heroes");
 
-        if (!hero) {
+                if (!response.ok) {
+                    throw new Error("Failed to load heroes.");
+                }
+
+                const data: Hero[] = await response.json();
+
+                setHeroes(data);
+            } catch (error) {
+                console.error(error);
+                setError("Could not load hero data.");
+            }
+        }
+
+        loadHeroes();
+    }, []);
+
+    const search = heroInput.trim().toLowerCase();
+
+    const suggestions = search
+        ? heroes
+            .filter((hero) => {
+                const name = hero.name.toLowerCase();
+                const slug = hero.slug.toLowerCase();
+
+                const matchesName = name.includes(search);
+                const matchesSlug = slug.includes(search);
+
+                const matchesAlias = hero.aliases.some(
+                    (alias) =>
+                        alias.toLowerCase().includes(search)
+                );
+
+                return (
+                    matchesName ||
+                    matchesSlug ||
+                    matchesAlias
+                );
+            })
+            .filter(
+                (hero) =>
+                    !enemyHeroes.some(
+                        (enemy) => enemy.slug === hero.slug
+                    )
+            )
+            .slice(0, 6)
+        : [];
+
+    function addHero(hero: Hero) {
+        if (
+            enemyHeroes.some(
+                (enemy) => enemy.slug === hero.slug
+            )
+        ) {
             return;
         }
 
-        if (enemyHeroes.includes(hero)) {
-            return;
-        }
+        setEnemyHeroes([
+            ...enemyHeroes,
+            hero
+        ]);
 
-        setEnemyHeroes([...enemyHeroes, hero]);
         setHeroInput("");
+        setError("");
     }
 
-    function removeHero(hero: string) {
+    function addTypedHero() {
+        const input = heroInput.trim();
+
+        if (!input) {
+            return;
+        }
+
+        const exactHero = heroes.find((hero) => {
+            const searchValue = input.toLowerCase();
+
+            return (
+                hero.name.toLowerCase() === searchValue ||
+                hero.slug.toLowerCase() === searchValue ||
+                hero.aliases.some(
+                    (alias) =>
+                        alias.toLowerCase() === searchValue
+                )
+            );
+        });
+
+        if (!exactHero) {
+            setError(`Hero not found: ${input}`);
+            return;
+        }
+
+        addHero(exactHero);
+    }
+
+    function removeHero(slug: string) {
         setEnemyHeroes(
-            enemyHeroes.filter((enemy) => enemy !== hero)
+            enemyHeroes.filter(
+                (hero) => hero.slug !== slug
+            )
+        );
+    }
+
+    function findHeroByName(name: string) {
+        return heroes.find(
+            (hero) =>
+                hero.name.toLowerCase() ===
+                name.toLowerCase()
         );
     }
 
@@ -50,22 +152,30 @@ function App() {
         setError("");
 
         try {
-            const heroes = enemyHeroes.join(",");
+            const heroSlugs = enemyHeroes
+                .map((hero) => hero.slug)
+                .join(",");
 
             const response = await fetch(
-    `/api/team-counters?heroes=${heroes}`
-);
+                `/api/team-counters?heroes=${heroSlugs}`
+            );
 
             if (!response.ok) {
-                throw new Error("Failed to get counters.");
+                throw new Error(
+                    "Failed to get counters."
+                );
             }
 
-            const data: CounterResponse = await response.json();
+            const data: CounterResponse =
+                await response.json();
 
             setCounters(data.counters);
         } catch (error) {
             console.error(error);
-            setError("Could not get counters from the backend.");
+
+            setError(
+                "Could not get counters from the backend."
+            );
         } finally {
             setLoading(false);
         }
@@ -83,21 +193,62 @@ function App() {
 
                 <div className="input-section">
 
-                    <input
-                        type="text"
-                        placeholder="Enter hero name..."
-                        value={heroInput}
-                        onChange={(event) =>
-                            setHeroInput(event.target.value)
-                        }
-                        onKeyDown={(event) => {
-                            if (event.key === "Enter") {
-                                addHero();
-                            }
-                        }}
-                    />
+                    <div className="search-box">
 
-                    <button onClick={addHero}>
+                        <input
+                            type="text"
+                            placeholder="Search hero or shorthand..."
+                            value={heroInput}
+                            onChange={(event) =>
+                                setHeroInput(
+                                    event.target.value
+                                )
+                            }
+                            onKeyDown={(event) => {
+                                if (event.key === "Enter") {
+                                    addTypedHero();
+                                }
+                            }}
+                        />
+
+                        {suggestions.length > 0 && (
+                            <div className="suggestions">
+
+                                {suggestions.map((hero) => (
+                                    <button
+                                        key={hero.slug}
+                                        className="suggestion"
+                                        onClick={() =>
+                                            addHero(hero)
+                                        }
+                                    >
+                                        <img
+                                            src={hero.image}
+                                            alt={hero.name}
+                                        />
+
+                                        <span>
+                                            {hero.name}
+                                        </span>
+
+                                        {hero.aliases.length > 0 && (
+                                            <small>
+                                                {hero.aliases
+                                                    .slice(0, 2)
+                                                    .join(", ")}
+                                            </small>
+                                        )}
+                                    </button>
+                                ))}
+
+                            </div>
+                        )}
+
+                    </div>
+
+                    <button
+                        onClick={addTypedHero}
+                    >
                         Add Hero
                     </button>
 
@@ -117,13 +268,22 @@ function App() {
                             {enemyHeroes.map((hero) => (
                                 <div
                                     className="hero-tag"
-                                    key={hero}
+                                    key={hero.slug}
                                 >
-                                    <span>{hero}</span>
+                                    <img
+                                        src={hero.image}
+                                        alt={hero.name}
+                                    />
+
+                                    <span>
+                                        {hero.name}
+                                    </span>
 
                                     <button
                                         onClick={() =>
-                                            removeHero(hero)
+                                            removeHero(
+                                                hero.slug
+                                            )
                                         }
                                     >
                                         ×
@@ -139,7 +299,10 @@ function App() {
                 <button
                     className="counter-button"
                     onClick={findCounters}
-                    disabled={loading || enemyHeroes.length === 0}
+                    disabled={
+                        loading ||
+                        enemyHeroes.length === 0
+                    }
                 >
                     {loading
                         ? "Finding Counters..."
@@ -161,33 +324,67 @@ function App() {
 
                             {counters
                                 .slice(0, 10)
-                                .map((counter, index) => (
-                                    <div
-                                        className="counter-card"
-                                        key={counter.hero}
-                                    >
-                                        <div className="rank">
-                                            #{index + 1}
-                                        </div>
+                                .map(
+                                    (
+                                        counter,
+                                        index
+                                    ) => {
+                                        const hero =
+                                            findHeroByName(
+                                                counter.hero
+                                            );
 
-                                        <div className="counter-info">
-                                            <h3>
-                                                {counter.hero}
-                                            </h3>
+                                        return (
+                                            <div
+                                                className="counter-card"
+                                                key={
+                                                    counter.hero
+                                                }
+                                            >
 
-                                            <p>
-                                                Counters:{" "}
-                                                {counter.against.join(
-                                                    ", "
+                                                {hero && (
+                                                    <img
+                                                        className="counter-image"
+                                                        src={
+                                                            hero.image
+                                                        }
+                                                        alt={
+                                                            hero.name
+                                                        }
+                                                    />
                                                 )}
-                                            </p>
-                                        </div>
 
-                                        <div className="score">
-                                            {counter.score.toFixed(2)}
-                                        </div>
-                                    </div>
-                                ))}
+                                                <div className="rank">
+                                                    #{index + 1}
+                                                </div>
+
+                                                <div className="counter-info">
+
+                                                    <h3>
+                                                        {
+                                                            counter.hero
+                                                        }
+                                                    </h3>
+
+                                                    <p>
+                                                        Counters:{" "}
+                                                        {counter.against.join(
+                                                            ", "
+                                                        )}
+                                                    </p>
+
+                                                </div>
+
+                                                <div className="score">
+                                                    {counter.score.toFixed(
+                                                        2
+                                                    )}
+                                                </div>
+
+                                            </div>
+                                        );
+                                    }
+                                )}
 
                         </div>
 

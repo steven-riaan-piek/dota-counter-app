@@ -1,12 +1,40 @@
 import { createServer } from "node:http";
 import { getCounters } from "./dotabuff";
 import { getCombinedCounters } from "./counter-service";
+import { getHeroes, findHero } from "./heroes";
 
 const server = createServer(async (req, res) => {
     const url = new URL(
         req.url ?? "/",
         `http://${req.headers.host}`
     );
+// GET /api/heroes
+if (
+    req.method === "GET" &&
+    url.pathname === "/api/heroes"
+) {
+    try {
+        const heroes = await getHeroes();
+
+        res.writeHead(200, {
+            "Content-Type": "application/json"
+        });
+
+        res.end(JSON.stringify(heroes));
+    } catch (error) {
+        console.error(error);
+
+        res.writeHead(500, {
+            "Content-Type": "application/json"
+        });
+
+        res.end(JSON.stringify({
+            error: "Failed to get heroes"
+        }));
+    }
+
+    return;
+}
 
 // GET /api/team-counters?heroes=sven,invoker,lion
 if (
@@ -27,10 +55,30 @@ if (
         return;
     }
 
-    const enemyHeroes = heroesParam
-        .split(",")
-        .map((hero) => hero.trim().toLowerCase())
-        .filter(Boolean);
+    const inputs = heroesParam
+    .split(",")
+    .map((hero) => hero.trim())
+    .filter(Boolean);
+
+const enemyHeroes: string[] = [];
+
+for (const input of inputs) {
+    const hero = await findHero(input);
+
+    if (!hero) {
+        res.writeHead(400, {
+            "Content-Type": "application/json"
+        });
+
+        res.end(JSON.stringify({
+            error: `Hero not found: ${input}`
+        }));
+
+        return;
+    }
+
+    enemyHeroes.push(hero.slug);
+};
 
     if (enemyHeroes.length === 0) {
         res.writeHead(400, {

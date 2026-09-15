@@ -41,8 +41,13 @@ h1 {
     gap: 10px;
 }
 
-.input-section input {
+.search-box {
+    position: relative;
     flex: 1;
+}
+
+.search-box input {
+    width: 100%;
     padding: 14px;
     border: 1px solid #374151;
     border-radius: 8px;
@@ -51,13 +56,72 @@ h1 {
     outline: none;
 }
 
-.input-section button {
+.search-box input:focus {
+    border-color: #2563eb;
+}
+
+.input-section > button {
     padding: 14px 22px;
     border: none;
     border-radius: 8px;
     cursor: pointer;
     background: #2563eb;
     color: white;
+}
+
+.suggestions {
+    position: absolute;
+    z-index: 10;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 8px;
+
+    overflow: hidden;
+}
+
+.suggestion {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding: 10px;
+    border: none;
+    border-bottom: 1px solid #374151;
+
+    background: transparent;
+    color: white;
+
+    text-align: left;
+    cursor: pointer;
+}
+
+.suggestion:last-child {
+    border-bottom: none;
+}
+
+.suggestion:hover {
+    background: #374151;
+}
+
+.suggestion img {
+    width: 50px;
+    height: 28px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.suggestion span {
+    flex: 1;
+    font-weight: bold;
+}
+
+.suggestion small {
+    color: #9ca3af;
 }
 
 .enemy-section {
@@ -82,10 +146,18 @@ h1 {
 .hero-tag {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
+
     background: #374151;
-    padding: 8px 12px;
+    padding: 6px 10px;
     border-radius: 20px;
+}
+
+.hero-tag img {
+    width: 38px;
+    height: 24px;
+    object-fit: cover;
+    border-radius: 4px;
 }
 
 .hero-tag button {
@@ -100,10 +172,13 @@ h1 {
     width: 100%;
     margin-top: 30px;
     padding: 15px;
+
     border: none;
     border-radius: 8px;
+
     background: #16a34a;
     color: white;
+
     font-weight: bold;
     cursor: pointer;
 }
@@ -131,11 +206,20 @@ h1 {
 .counter-card {
     display: flex;
     align-items: center;
-    gap: 20px;
-    padding: 18px;
+    gap: 15px;
+
+    padding: 12px 18px;
+
     background: #1f2937;
     border: 1px solid #374151;
     border-radius: 10px;
+}
+
+.counter-image {
+    width: 75px;
+    height: 42px;
+    object-fit: cover;
+    border-radius: 6px;
 }
 
 .rank {
