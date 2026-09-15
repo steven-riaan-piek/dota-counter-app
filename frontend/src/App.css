@@ -1,0 +1,164 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #111827;
+    color: white;
+}
+
+button,
+input {
+    font: inherit;
+}
+
+.app {
+    min-height: 100vh;
+    padding: 60px 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+h1 {
+    text-align: center;
+    font-size: 42px;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    text-align: center;
+    color: #9ca3af;
+    margin-bottom: 40px;
+}
+
+.input-section {
+    display: flex;
+    gap: 10px;
+}
+
+.input-section input {
+    flex: 1;
+    padding: 14px;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    background: #1f2937;
+    color: white;
+    outline: none;
+}
+
+.input-section button {
+    padding: 14px 22px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #2563eb;
+    color: white;
+}
+
+.enemy-section {
+    margin-top: 30px;
+}
+
+.enemy-section h2,
+.results h2 {
+    margin-bottom: 15px;
+}
+
+.empty {
+    color: #6b7280;
+}
+
+.hero-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.hero-tag {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #374151;
+    padding: 8px 12px;
+    border-radius: 20px;
+}
+
+.hero-tag button {
+    border: none;
+    background: transparent;
+    color: #f87171;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.counter-button {
+    width: 100%;
+    margin-top: 30px;
+    padding: 15px;
+    border: none;
+    border-radius: 8px;
+    background: #16a34a;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.counter-button:disabled {
+    background: #374151;
+    cursor: not-allowed;
+}
+
+.error {
+    margin-top: 20px;
+    color: #f87171;
+}
+
+.results {
+    margin-top: 45px;
+}
+
+.counter-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.counter-card {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 18px;
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 10px;
+}
+
+.rank {
+    width: 45px;
+    font-weight: bold;
+    color: #9ca3af;
+}
+
+.counter-info {
+    flex: 1;
+}
+
+.counter-info h3 {
+    margin: 0 0 5px;
+}
+
+.counter-info p {
+    margin: 0;
+    color: #9ca3af;
+    font-size: 14px;
+}
+
+.score {
+    font-size: 20px;
+    font-weight: bold;
+}
