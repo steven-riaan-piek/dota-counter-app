@@ -15,7 +15,9 @@ export async function getCounters(heroSlug: string): Promise<Counter[]> {
     try {
         const page = await browser.newPage();
 
-        const url = `https://www.dotabuff.com/heroes/${heroSlug}/counters`;
+        const dotabuffSlug = heroSlug.replace(/_/g, "-");
+
+const url = `https://www.dotabuff.com/heroes/${dotabuffSlug}/counters`;
 
         await page.goto(url, {
             waitUntil: "domcontentloaded"

@@ -1,0 +1,49 @@
+generator client {
+  provider   = "prisma-client"
+  output     = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Hero {
+  id      Int    @id @default(autoincrement())
+  name    String
+  slug    String @unique
+  image   String
+
+  aliases         HeroAlias[]
+  matchups        HeroMatchup[] @relation("HeroMatchups")
+  counterMatchups HeroMatchup[] @relation("CounterHeroMatchups")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model HeroAlias {
+  id     Int    @id @default(autoincrement())
+  alias  String @unique
+  heroId Int
+
+  hero Hero @relation(fields: [heroId], references: [id], onDelete: Cascade)
+}
+
+model HeroMatchup {
+  id Int @id @default(autoincrement())
+
+  heroId        Int
+  counterHeroId Int
+
+  disadvantage Float
+  winRate      Float
+  matches      Int
+
+  updatedAt DateTime @updatedAt
+
+  hero        Hero @relation("HeroMatchups", fields: [heroId], references: [id], onDelete: Cascade)
+  counterHero Hero @relation("CounterHeroMatchups", fields: [counterHeroId], references: [id], onDelete: Cascade)
+
+  @@unique([heroId, counterHeroId])
+}

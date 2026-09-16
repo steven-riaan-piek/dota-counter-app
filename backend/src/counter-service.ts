@@ -1,4 +1,4 @@
-import { getCounters, Counter } from "./dotabuff";
+import { prisma } from "./prisma";
 
 export interface CombinedCounter {
     hero: string;
@@ -10,34 +10,44 @@ export async function getCombinedCounters(
     enemyHeroes: string[]
 ): Promise<CombinedCounter[]> {
 
-    const results = await Promise.all(
-        enemyHeroes.map((hero) => getCounters(hero))
-    );
+    const heroes = await prisma.hero.findMany({
+        where: {
+            slug: {
+                in: enemyHeroes
+            }
+        },
+        include: {
+            matchups: {
+                include: {
+                    counterHero: true
+                }
+            }
+        }
+    });
 
     const counterMap = new Map<string, CombinedCounter>();
 
-    for (let i = 0; i < results.length; i++) {
+    for (const enemyHero of heroes) {
 
-        const counters: Counter[] = results[i];
-        const enemyHero = enemyHeroes[i];
+        for (const matchup of enemyHero.matchups) {
 
-        for (const counter of counters) {
+            const counterHero = matchup.counterHero;
 
-            if (!counterMap.has(counter.hero)) {
-                counterMap.set(counter.hero, {
-                    hero: counter.hero,
+            if (!counterMap.has(counterHero.slug)) {
+                counterMap.set(counterHero.slug, {
+                    hero: counterHero.name,
                     score: 0,
                     against: []
                 });
             }
 
-            const existing = counterMap.get(counter.hero)!;
+            const existing = counterMap.get(counterHero.slug)!;
 
             existing.score = Number(
-    (existing.score + counter.disadvantage).toFixed(2)
-);
+                (existing.score + matchup.disadvantage).toFixed(2)
+            );
 
-            existing.against.push(enemyHero);
+            existing.against.push(enemyHero.name);
         }
     }
 

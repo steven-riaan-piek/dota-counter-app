@@ -1,3 +1,4 @@
+import { prisma } from "./prisma";
 export interface Hero {
     id: number;
     name: string;
@@ -126,20 +127,51 @@ export async function findHero(
     input: string
 ): Promise<Hero | undefined> {
 
-    const heroes = await getHeroes();
-
     const search = normalize(input);
 
-    return heroes.find((hero) => {
-        const name = normalize(hero.name);
-        const slug = normalize(hero.slug);
-
-        return (
-            name === search ||
-            slug === search ||
-            hero.aliases.some(
-                (alias) => normalize(alias) === search
-            )
-        );
+    const hero = await prisma.hero.findFirst({
+        where: {
+            OR: [
+                {
+                    name: {
+                        equals: input,
+                        mode: "insensitive"
+                    }
+                },
+                {
+                    slug: {
+                        equals: input,
+                        mode: "insensitive"
+                    }
+                },
+                {
+                    aliases: {
+                        some: {
+                            alias: {
+                                equals: input,
+                                mode: "insensitive"
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        include: {
+            aliases: true
+        }
     });
+
+    if (!hero) {
+        return undefined;
+    }
+
+    return {
+        id: hero.id,
+        name: hero.name,
+        slug: hero.slug,
+        aliases: hero.aliases.map(
+            (alias) => alias.alias
+        ),
+        image: hero.image
+    };
 }
